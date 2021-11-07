@@ -1,47 +1,53 @@
 from django.http import HttpResponse
 
-#from .models import ALBUMS
+from .models import Artists, Albums
+
+
+def format_album_list(albums):
+    formatted_albums = [f"<li>{album.title}</li>" for album in albums]
+    return """<ul>{}</ul>""".format('\n'.join(formatted_albums))
 
 
 def index(request):
-    message = 'Hello world!'
+    albums = Albums.objects.filter(is_available=True).order_by("-created_at")[:12]
+    message = format_album_list(albums)
+
     return HttpResponse(message)
 
 
 def listing(request):
-    albums = ["<li>{}</li>".format(album['name']) for album in ALBUMS]
-    message = """<ul>{}</ul>""".format("\n".join(albums))
+    albums = Albums.objects.filter(is_available=True)
+    message = format_album_list(albums)
+
     return HttpResponse(message)
 
 
 def single(request, album_id):
-    album = ALBUMS[album_id]
-    artists = " ".join([artist['name'] for artist in album['artists']])
-    message = f"Le nom de l'album est {album['name']}. Il a été écrit par {artists}"
+    album = Albums.objects.get(pk=album_id)
+    artists = " ".join([artist.name for artist in album.artists.all()])
+    message = f"Le nom de l'album est {album.title}. Il a été écrit par {artists}"
     return HttpResponse(message)
 
 
 def search(request):
-    query = request.GET.get('query')
+    query = request.GET.get("query")
     if not query:
-        message = "Aucun artiste n'est demandé"
+        albums = Albums.objects.all()
     else:
-        albums_result = []
-        for album in ALBUMS:
-            artists = " ".join(artist['name'] for artist in album['artists'])
+        albums = Albums.objects.filter(title__icontains=query)
 
-            if query in artists:
-                albums_result.append(album)
+    if not albums.exists():
+        albums = Albums.objects.filter(artists__name__icontains=query)
 
-        if len(albums_result) == 0:
-            message = "Misère de misère, nous n'avons trouvé aucun résultat !"
-        else:
-            albums = ["<li>{}</li>".format(album['name']) for album in albums_result]
-            message = """
-                Nous avons trouvé les albums correspondant à votre requête ! Les voici :
-                <ul>
-                    {}
-                </ul>
-            """.format("</li><li>".join(albums))
+    if not albums.exists():
+        message = "Misère de misère, nous n'avons trouvé aucun résultat !"
+    else:
+        albums = [f"<li>{album.title}</li>" for album in albums]
+        message = """
+            Nous avons trouvé les albums correspondant à votre requête ! Les voici :
+            <ul>
+                {}
+            </ul>
+        """.format("</li><li>".join(albums))
 
     return HttpResponse(message)
