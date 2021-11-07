@@ -1,4 +1,5 @@
 from django.http import HttpResponse
+from django.template import loader
 
 from .models import Artists, Albums
 
@@ -10,9 +11,9 @@ def format_album_list(albums):
 
 def index(request):
     albums = Albums.objects.filter(is_available=True).order_by("-created_at")[:12]
-    message = format_album_list(albums)
+    template = loader.get_template("store/index.html")
 
-    return HttpResponse(message)
+    return HttpResponse(template.render(request=request))
 
 
 def listing(request):
