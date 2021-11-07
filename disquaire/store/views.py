@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 
 from .models import Artists, Albums
 
@@ -18,7 +18,7 @@ def listing(request):
 
 
 def single(request, album_id):
-    album = Albums.objects.get(pk=album_id)
+    album = get_object_or_404(Albums, pk=album_id)
     artists = [artist.name for artist in album.artists.all()]
     artists_name = " ".join(artists)
     context = {
