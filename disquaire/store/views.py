@@ -1,7 +1,7 @@
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import render, get_object_or_404
 
-from .forms import BookingForm
+from .forms import BookingForm, ParagraphErrorList
 from .models import Artists, Albums, Contacts, Bookings
 
 
@@ -41,7 +41,7 @@ def single(request, album_id):
     }
 
     if request.method == 'POST':
-        booking_form = BookingForm(request.POST)
+        booking_form = BookingForm(request.POST, error_class=ParagraphErrorList)
         if booking_form.is_valid():
             email = booking_form.cleaned_data['email']
             name = booking_form.cleaned_data['name']
