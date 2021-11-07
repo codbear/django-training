@@ -11,7 +11,7 @@ class Contacts(models.Model):
 
 
 class Albums(models.Model):
-    reference = models.CharField(null=True)
+    reference = models.CharField(max_length=200, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_available = models.BooleanField(default=True)
     title = models.CharField(max_length=200)
@@ -22,5 +22,5 @@ class Albums(models.Model):
 class Bookings(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     has_been_contacted = models.BooleanField(default=False)
-    album = models.OneToOneField(Albums)
+    album = models.OneToOneField(Albums, on_delete=models.CASCADE)
     contact = models.ForeignKey(Contacts, on_delete=models.CASCADE)
