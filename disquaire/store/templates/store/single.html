@@ -19,19 +19,29 @@
         <form class="form-inline" action="{% url 'store:single' album_id=album_id %}" method="post">
             {% csrf_token %}
 
-            <div class="form-group">
-                <label for="name" class="control-label">Nom</label>
-                <input type="text" name="name" value="" id="name">
+            <div class="form-group {% if booking_form.name.errors %}has-warning has-feedback{% endif %}">
+                <label for={{ booking_form.name.id_for_label }} class="control-label">Nom</label>
+                {{ booking_form.name }}
             </div>
 
-            <div class="form-group">
-                <label for="email" class="control-label">E-mail</label>
-                <input type="text" name="email" value="" id="email">
+            <div class="form-group {% if booking_form.email.errors %}has-warning has-feedback{% endif %}">
+                <label for={{ booking_form.email.id_for_label }} class="control-label">E-mail</label>
+                {{ booking_form.email }}
             </div>
             <!-- <input type="hidden" class="hidden" value="{{ album_id }}" name="album_id"> -->
 
             <button type="submit" class="btn btn-success">Réserver</button>
         </form>
+
+        {% if errors %}
+            <div>
+                {% for key, error in errors %}
+                    {% autoescape off %}
+                        {{ error }}
+                    {% endautoescape %}
+                {% endfor %}
+            </div>
+        {% endif %}
 
     </div>
 

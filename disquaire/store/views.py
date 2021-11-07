@@ -1,6 +1,7 @@
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import render, get_object_or_404
 
+from .forms import BookingForm
 from .models import Artists, Albums, Contacts, Bookings
 
 
@@ -30,41 +31,48 @@ def listing(request):
 
 def single(request, album_id):
     album = get_object_or_404(Albums, pk=album_id)
+    artists = [artist.name for artist in album.artists.all()]
+    artists_name = " ".join(artists)
+    context = {
+        'album_title': album.title,
+        'artists_name': artists_name,
+        'album_id': album.id,
+        'thumbnail': album.picture,
+    }
 
-    if request.method == 'GET':
-        artists = [artist.name for artist in album.artists.all()]
-        artists_name = " ".join(artists)
-        context = {
-            'album_title': album.title,
-            'artists_name': artists_name,
-            'album_id': album.id,
-            'thumbnail': album.picture,
-        }
+    if request.method == 'POST':
+        booking_form = BookingForm(request.POST)
+        if booking_form.is_valid():
+            email = booking_form.cleaned_data['email']
+            name = booking_form.cleaned_data['name']
+            contact = Contacts.objects.filter(email=email)
 
-        return render(request, 'store/single.html', context)
-    elif request.method == 'POST':
-        email = request.POST.get('email')
-        name = request.POST.get('name')
-        contact = Contacts.objects.filter(email=email)
+            if not contact.exists():
+                contact = Contacts.objects.create(
+                    email=email,
+                    name=name
+                )
 
-        if not contact.exists():
-            contact = Contacts.objects.create(
-                email=email,
-                name=name
+            booking = Bookings.objects.create(
+                contact=contact,
+                album=album
             )
 
-        booking = Bookings.objects.create(
-            contact=contact[0],
-            album=album
-        )
+            album.is_available = False
+            album.save()
+            context = {
+                'album_title': album.title
+            }
 
-        album.is_available = False
-        album.save()
-        context = {
-            'album_title': album.title
-        }
+            return render(request, 'store/merci.html', context)
+        else:
+            context['errors'] = booking_form.errors.items()
+    else:
+        booking_form = BookingForm()
 
-        return render(request, 'store/merci.html', context)
+    context['booking_form'] = booking_form
+
+    return render(request, 'store/single.html', context)
 
 
 def search(request):
