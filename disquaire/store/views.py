@@ -12,8 +12,9 @@ def format_album_list(albums):
 def index(request):
     albums = Albums.objects.filter(is_available=True).order_by("-created_at")[:12]
     template = loader.get_template("store/index.html")
+    context = {"albums": albums}
 
-    return HttpResponse(template.render(request=request))
+    return HttpResponse(template.render(context, request=request))
 
 
 def listing(request):
