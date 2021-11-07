@@ -1,4 +1,5 @@
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.db import transaction, IntegrityError
 from django.shortcuts import render, get_object_or_404
 
 from .forms import BookingForm, ParagraphErrorList
@@ -42,35 +43,42 @@ def single(request, album_id):
 
     if request.method == 'POST':
         booking_form = BookingForm(request.POST, error_class=ParagraphErrorList)
+
         if booking_form.is_valid():
             email = booking_form.cleaned_data['email']
             name = booking_form.cleaned_data['name']
-            contact = Contacts.objects.filter(email=email)
 
-            if not contact.exists():
-                contact = Contacts.objects.create(
-                    email=email,
-                    name=name
-                )
+            try:
+                with transaction.atomic():
+                    contact = Contacts.objects.filter(email=email)
 
-            booking = Bookings.objects.create(
-                contact=contact,
-                album=album
-            )
+                    if not contact.exists():
+                        contact = Contacts.objects.create(
+                            email=email,
+                            name=name
+                        )
+                    else:
+                        contact = contact.first()
 
-            album.is_available = False
-            album.save()
-            context = {
-                'album_title': album.title
-            }
+                    booking = Bookings.objects.create(
+                        contact=contact,
+                        album=album
+                    )
 
-            return render(request, 'store/merci.html', context)
-        else:
-            context['errors'] = booking_form.errors.items()
+                    album.is_available = False
+                    album.save()
+                    context = {
+                        'album_title': album.title
+                    }
+
+                    return render(request, 'store/merci.html', context)
+            except IntegrityError:
+                booking_form.errors['internal'] = 'Une erreur interne est apparue. Merci de recommencer votre requête.'
     else:
         booking_form = BookingForm()
 
     context['booking_form'] = booking_form
+    context['errors'] = booking_form.errors.items()
 
     return render(request, 'store/single.html', context)
 
