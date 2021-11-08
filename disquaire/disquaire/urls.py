@@ -20,7 +20,7 @@ from django.urls import include, path
 from store import views
 
 urlpatterns = [
-    path('', views.index),
+    path('', views.index, name='index'),
     path('store/', include('store.urls', namespace='store')),
     path('dashboard/', admin.site.urls),
 ]
